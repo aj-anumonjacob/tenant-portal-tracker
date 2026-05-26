@@ -451,6 +451,11 @@ input[type="checkbox"], input[type="radio"] {
   to { transform: translateX(0); }
 }
 
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

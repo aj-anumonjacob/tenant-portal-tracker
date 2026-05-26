@@ -160,7 +160,7 @@ export default function DynamicForm({ fields, onSubmit, initialValues = {}, subm
   };
 
   return (
-    <form onSubmit={handleSubmit} className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <form onSubmit={handleSubmit} className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       
       {fields.length === 0 ? (
         <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -168,16 +168,27 @@ export default function DynamicForm({ fields, onSubmit, initialValues = {}, subm
           <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Go to Field Builder in Settings to add some fields.</p>
         </div>
       ) : (
-        fields.map(field => {
-          const key = field.field_key;
-          const label = field.field_name;
-          const isRequired = field.is_required;
-          const fieldOptions = Array.isArray(field.field_options) ? field.field_options : [];
-          const error = errors[key];
-          const val = formData[key];
-          
-          return (
-            <div key={field.id} className="form-group" style={{ marginBottom: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+          {fields.map(field => {
+            const key = field.field_key;
+            const label = field.field_name;
+            const isRequired = field.is_required;
+            const fieldOptions = Array.isArray(field.field_options) ? field.field_options : [];
+            const error = errors[key];
+            const val = formData[key];
+            
+            // Textareas, files, checkboxes, and radio button groups take full width
+            const isFullWidth = ['textarea', 'file', 'checkbox', 'radio'].includes(field.field_type);
+            
+            return (
+              <div 
+                key={field.id} 
+                className="form-group" 
+                style={{ 
+                  margin: 0,
+                  gridColumn: isFullWidth ? '1 / -1' : 'span 1'
+                }}
+              >
               <label className="form-label">
                 {label}
                 {isRequired && <span className="required">*</span>}
@@ -391,7 +402,8 @@ export default function DynamicForm({ fields, onSubmit, initialValues = {}, subm
               )}
             </div>
           );
-        })
+        })}
+        </div>
       )}
 
       {/* Form Buttons */}

@@ -9,7 +9,8 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  FileSpreadsheet
+  FileSpreadsheet,
+  X
 } from 'lucide-react';
 import { api, API_BASE_URL } from '../api';
 import DynamicForm from '../components/DynamicForm';
@@ -517,39 +518,58 @@ export default function TaskList({ projectId }) {
           <div 
             style={{
               width: '100%',
-              maxWidth: '500px',
+              maxWidth: '550px',
               height: '100%',
               backgroundColor: 'var(--bg-sidebar)',
               borderLeft: '1px solid var(--border)',
               display: 'flex',
               flexDirection: 'column',
               boxShadow: 'var(--shadow-xl)',
-              animation: 'slideInLeft 0.3s forwards'
+              animation: 'slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              backdropFilter: 'blur(20px)',
+              background: 'linear-gradient(180deg, var(--bg-sidebar) 0%, var(--bg-app) 100%)'
             }}
             onClick={(e) => e.stopPropagation()} // Stop bubble up
           >
             {/* Header */}
             <div 
               style={{
-                padding: '1.25rem 1.5rem',
+                padding: '1.5rem',
                 borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                background: 'linear-gradient(90deg, var(--primary-light) 0%, transparent 100%)'
               }}
             >
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800' }}>
-                {editingTask ? 'Edit Task Record' : 'Create Task Entry'}
-              </h3>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                  {editingTask ? 'Edit Task Record' : 'Create Task Entry'}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
+                  {editingTask ? `Updating task registry ID #${editingTask.id}` : 'Fill in the custom fields configured for this project'}
+                </p>
+              </div>
               <button 
                 onClick={() => {
                   setIsDrawerOpen(false);
                   setEditingTask(null);
                 }}
-                className="btn btn-secondary btn-sm"
-                style={{ padding: '4px 8px' }}
+                className="btn btn-secondary btn-icon btn-sm"
+                style={{ 
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--bg-card)'
+                }}
+                title="Close Form"
               >
-                Close
+                <X size={16} />
               </button>
             </div>
 

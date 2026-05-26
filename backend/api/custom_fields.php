@@ -36,6 +36,7 @@ if ($method === 'GET') {
             }
             $field['is_required'] = (bool)$field['is_required'];
         }
+        unset($field);
         
         sendResponse(true, "Custom fields retrieved successfully.", $fields, 200);
     } catch (Exception $e) {

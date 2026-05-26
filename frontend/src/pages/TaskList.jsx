@@ -26,6 +26,13 @@ export default function TaskList({ projectId }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
 
+  // Import/Export Modal State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [importError, setImportError] = useState('');
+
   // Filters and Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPortalStatus, setFilterPortalStatus] = useState('');
@@ -55,6 +62,39 @@ export default function TaskList({ projectId }) {
     }
   };
 
+  const handleExportTemplate = async () => {
+    try {
+      await api.exportTasks(projectId, 'template');
+    } catch (e) {
+      alert(`Export template failed: ${e.message}`);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      await api.exportTasks(projectId, 'export');
+    } catch (e) {
+      alert(`Export data failed: ${e.message}`);
+    }
+  };
+
+  const handleImportSubmit = async () => {
+    if (!selectedFile) return;
+    setImporting(true);
+    setImportError('');
+    setImportResult(null);
+    try {
+      const res = await api.importTasks(projectId, selectedFile);
+      setImportResult(res.data);
+      setSelectedFile(null);
+      await loadTasksData();
+    } catch (e) {
+      setImportError(e.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+  
   useEffect(() => {
     loadTasksData();
     // Reset filters on project switch
@@ -256,16 +296,26 @@ export default function TaskList({ projectId }) {
           <h2 style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-0.025em' }}>Tasks Database</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Search, filter, and modify registration records.</p>
         </div>
-        <button 
-          onClick={() => {
-            setEditingTask(null);
-            setIsDrawerOpen(true);
-          }}
-          className="btn btn-primary"
-        >
-          <Plus size={18} />
-          <span>New Task Entry</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="btn btn-secondary"
+            title="Bulk import or export task entries via CSV/Excel"
+          >
+            <FileSpreadsheet size={18} />
+            <span>Bulk Actions</span>
+          </button>
+          <button 
+            onClick={() => {
+              setEditingTask(null);
+              setIsDrawerOpen(true);
+            }}
+            className="btn btn-primary"
+          >
+            <Plus size={18} />
+            <span>New Task Entry</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. Filters Card */}
@@ -617,6 +667,253 @@ export default function TaskList({ projectId }) {
                   setEditingTask(null);
                 }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Bulk Import/Export Modal */}
+      {isImportModalOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 110,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem'
+          }}
+          onClick={() => {
+            if (!importing) {
+              setIsImportModalOpen(false);
+              setSelectedFile(null);
+              setImportResult(null);
+              setImportError('');
+            }
+          }}
+        >
+          <div 
+            style={{
+              width: '100%',
+              maxWidth: '550px',
+              backgroundColor: 'var(--bg-sidebar)',
+              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: 'var(--shadow-xl)',
+              overflow: 'hidden',
+              animation: 'fadeIn var(--transition-normal) forwards',
+              background: 'linear-gradient(180deg, var(--bg-sidebar) 0%, var(--bg-app) 100%)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div 
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(90deg, var(--primary-light) 0%, transparent 100%)'
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                  Bulk Import / Export
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
+                  Download CSV templates, export database rows, or import Excel-edited data
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  if (!importing) {
+                    setIsImportModalOpen(false);
+                    setSelectedFile(null);
+                    setImportResult(null);
+                    setImportError('');
+                  }
+                }}
+                disabled={importing}
+                className="btn btn-secondary btn-icon btn-sm"
+                style={{ 
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--bg-card)'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Export Section */}
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                  1. Export Actions
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <button 
+                    onClick={handleExportTemplate}
+                    className="btn btn-secondary"
+                    style={{ justifyContent: 'center', padding: '0.75rem' }}
+                  >
+                    <FileSpreadsheet size={16} />
+                    <span>Get Template</span>
+                  </button>
+                  <button 
+                    onClick={handleExportData}
+                    className="btn btn-secondary"
+                    style={{ justifyContent: 'center', padding: '0.75rem' }}
+                  >
+                    <ExternalLink size={16} />
+                    <span>Export Tasks</span>
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ borderBottom: '1px solid var(--border)' }}></div>
+
+              {/* Import Section */}
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                  2. Import CSV File
+                </h4>
+                
+                {!importResult && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div 
+                      style={{
+                        border: '2px dashed var(--border)',
+                        borderRadius: '10px',
+                        padding: '2rem 1.5rem',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                        transition: 'border-color var(--transition-fast)'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                      onClick={() => document.getElementById('csv-file-input').click()}
+                    >
+                      <input 
+                        type="file" 
+                        id="csv-file-input" 
+                        accept=".csv" 
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setSelectedFile(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <FileSpreadsheet size={36} style={{ color: 'var(--text-muted)', marginBottom: '0.5rem', opacity: 0.7 }} />
+                      <p style={{ fontSize: '0.875rem', fontWeight: '600' }}>
+                        {selectedFile ? selectedFile.name : 'Click to select CSV File'}
+                      </p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                        Only .csv files (Excel exports) are supported
+                      </p>
+                    </div>
+
+                    {importError && (
+                      <div className="alert alert-danger" style={{ fontSize: '0.85rem', padding: '0.75rem 1rem', borderRadius: '8px' }}>
+                        <strong>Error:</strong> {importError}
+                      </div>
+                    )}
+
+                    {selectedFile && (
+                      <button 
+                        onClick={handleImportSubmit}
+                        disabled={importing}
+                        className="btn btn-primary"
+                        style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
+                      >
+                        {importing ? 'Importing Data...' : 'Upload & Import back'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Import Result Screen */}
+                {importResult && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div 
+                      style={{
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                        padding: '1rem',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <h5 style={{ color: '#10b981', fontWeight: '700', fontSize: '0.95rem' }}>Import Summary</h5>
+                      <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.875rem' }}>
+                        <div><strong>New Tasks Added:</strong> {importResult.created_count}</div>
+                        <div><strong>Tasks Updated:</strong> {importResult.updated_count}</div>
+                      </div>
+                    </div>
+
+                    {importResult.errors && importResult.errors.length > 0 && (
+                      <div>
+                        <h5 style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--danger)', marginBottom: '0.5rem' }}>
+                          Validation Errors / Warnings ({importResult.errors.length})
+                        </h5>
+                        <div 
+                          style={{
+                            maxHeight: '150px',
+                            overflowY: 'auto',
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            border: '1px solid rgba(239, 68, 68, 0.1)',
+                            borderRadius: '8px',
+                            padding: '0.75rem',
+                            fontSize: '0.75rem',
+                            color: 'var(--text-secondary)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.375rem',
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {importResult.errors.map((err, idx) => (
+                            <div key={idx} style={{ color: 'var(--danger)' }}>• {err}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <button 
+                      onClick={() => {
+                        setIsImportModalOpen(false);
+                        setSelectedFile(null);
+                        setImportResult(null);
+                        setImportError('');
+                      }}
+                      className="btn btn-secondary"
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      Close & Finish
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
             </div>
           </div>
         </div>

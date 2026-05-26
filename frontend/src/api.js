@@ -143,5 +143,43 @@ export const api = {
       }
     });
     return request(`reports.php?${params.toString()}`, { method: 'GET' });
+  },
+  
+  // 8. Import / Export
+  exportTasks: async (projectId, action = 'template') => {
+    const token = localStorage.getItem('tenant_tracker_token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      headers['X-Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/import_export.php?project_id=${projectId}&action=${action}`, {
+      method: 'GET',
+      headers
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download CSV file.');
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = action === 'export' ? `tasks_export_project_${projectId}.csv` : `tasks_template_project_${projectId}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
+  
+  importTasks: (projectId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request(`import_export.php?project_id=${projectId}`, {
+      method: 'POST',
+      body: formData
+    });
   }
 };

@@ -81,6 +81,7 @@ if ($method === 'GET') {
             $f['is_required'] = (bool)$f['is_required'];
             $customFieldsMap[$f['id']] = $f['field_key'];
         }
+        unset($f);
         
         // 2. Retrieve core task entries
         $tasksQuery = "SELECT id, project_id, task_status, created_at, updated_at 

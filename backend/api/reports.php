@@ -41,6 +41,7 @@ if ($method === 'GET') {
             }
             $customFieldsMap[$f['id']] = $f['field_key'];
         }
+        unset($f);
         
         // 2. Build filtered task query
         $whereClauses = ["project_id = :project_id"];

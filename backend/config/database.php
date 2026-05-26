@@ -11,16 +11,38 @@ class Database {
 
     public function __construct() {
         $this->loadEnv();
-        $this->host = getenv('DB_HOST') ?: 'localhost';
-        $this->port = getenv('DB_PORT') ?: '3306';
-        $this->db_name = getenv('DB_NAME') ?: 'tenant_tracker_db';
-        $this->username = getenv('DB_USER') ?: 'root';
-        $this->password = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
+        $this->host = $this->getEnvVar('DB_HOST', 'localhost');
+        $this->port = $this->getEnvVar('DB_PORT', '3306');
+        $this->db_name = $this->getEnvVar('DB_NAME', 'tenant_tracker_db');
+        $this->username = $this->getEnvVar('DB_USER', 'root');
+        $this->password = $this->getEnvVar('DB_PASS', '');
+    }
+
+    private function getEnvVar($key, $default = '') {
+        if (isset($_ENV[$key])) {
+            return $_ENV[$key];
+        }
+        if (isset($_SERVER[$key])) {
+            return $_SERVER[$key];
+        }
+        if (function_exists('getenv')) {
+            $val = getenv($key);
+            if ($val !== false) {
+                return $val;
+            }
+        }
+        return $default;
     }
 
     private function loadEnv() {
-        // Look for .env in the parent directory of backend/config, i.e., backend/
+        // Look for .env first
         $envPath = dirname(__DIR__) . '/.env';
+        
+        // Fallback to env.ini if the file manager hides or blocks dotfiles
+        if (!file_exists($envPath)) {
+            $envPath = dirname(__DIR__) . '/env.ini';
+        }
+        
         if (file_exists($envPath)) {
             $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
@@ -33,7 +55,9 @@ class Database {
                     $value = trim($parts[1]);
                     // Strip quotes
                     $value = trim($value, '"\'');
-                    putenv(sprintf('%s=%s', $name, $value));
+                    if (function_exists('putenv')) {
+                        @putenv(sprintf('%s=%s', $name, $value));
+                    }
                     $_ENV[$name] = $value;
                     $_SERVER[$name] = $value;
                 }
@@ -53,9 +77,15 @@ class Database {
         } catch (PDOException $exception) {
             header('Content-Type: application/json; charset=UTF-8');
             http_response_code(500);
+            
+            // Helpful debug information for path resolution
+            $searchDir = dirname(__DIR__);
+            $hasEnv = file_exists($searchDir . '/.env') || file_exists($searchDir . '/env.ini');
+            $envStatus = $hasEnv ? "Found config file." : "Missing config file (.env / env.ini not found in $searchDir).";
+            
             echo json_encode([
                 "success" => false,
-                "message" => "Database connection error: " . $exception->getMessage()
+                "message" => "Database connection error: " . $exception->getMessage() . " | " . $envStatus . " | Loaded Host: " . $this->host
             ]);
             exit;
         }

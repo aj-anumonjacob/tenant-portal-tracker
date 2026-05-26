@@ -1,8 +1,5 @@
 -- MySQL Database Schema for Tenant Portal Registration Tracker (with Advanced Custom Fields)
 
-CREATE DATABASE IF NOT EXISTS `tenant_tracker_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `tenant_tracker_db`;
-
 -- 1. Users Table
 CREATE TABLE IF NOT EXISTS `users` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,

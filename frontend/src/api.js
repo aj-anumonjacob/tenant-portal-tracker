@@ -21,6 +21,7 @@ async function request(endpoint, options = {}) {
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    headers['X-Authorization'] = `Bearer ${token}`;
   }
   
   const config = {

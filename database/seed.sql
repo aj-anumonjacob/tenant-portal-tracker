@@ -1,11 +1,9 @@
 -- Seed data for Tenant Portal Registration Tracker
 
-USE `tenant_tracker_db`;
-
 -- 1. Insert Default Administrator (password: admin123)
 -- bcrypt hash of 'admin123'
 INSERT INTO `users` (`id`, `username`, `password_hash`, `email`, `full_name`, `role`) VALUES
-(1, 'admin', '$2y$10$nSSDc1lI16UpeNhyB9tB5.vY35zCj/1hD1pLw9nNco/92rW26n9U2', 'admin@tenanttracker.local', 'System Administrator', 'admin')
+(1, 'admin', '$2y$10$KW5lQvfl7NPoI13h6Pfz3eI1bOXzTWOlYLJ10nJV113EQQR0MeM9i', 'admin@tenanttracker.local', 'System Administrator', 'admin')
 ON DUPLICATE KEY UPDATE `username` = `username`;
 
 -- 2. Insert Default Project
@@ -21,8 +19,8 @@ INSERT INTO `project_custom_fields` (`id`, `project_id`, `field_name`, `field_ke
 (4, 1, 'Call Status', 'call_status', 'dropdown', '["Follow-up Needed", "Call Not Picked Up", "Re-scheduled", "Facing Issue in Registration", "Invalid Number", "Completed"]', 1, 'Follow-up Needed', 4, 'enabled'),
 (5, 1, 'Portal Status', 'portal_status', 'dropdown', '["Registered", "Not Registered", "Pending"]', 1, 'Not Registered', 5, 'enabled'),
 (6, 1, 'Follow-up Date', 'follow_up_date', 'date', NULL, 0, '', 6, 'enabled'),
-(7, 1, 'Follow-up Notes', 'follow_up_notes', 'textarea', NULL, 0, '', 7, 'enabled')
-ON DUPLICATE KEY UPDATE `field_key` = `field_key`;
+(7, 1, 'Comment', 'comment', 'textarea', NULL, 0, '', 7, 'enabled')
+ON DUPLICATE KEY UPDATE `field_name` = VALUES(`field_name`), `field_key` = VALUES(`field_key`), `field_type` = VALUES(`field_type`);
 
 -- 4. Insert Default Tasks for 'Tenant Portal' Project
 INSERT INTO `tasks` (`id`, `project_id`, `task_status`) VALUES
